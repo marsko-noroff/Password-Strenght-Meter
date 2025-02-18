@@ -6,35 +6,17 @@ from collections import Counter
 
 app = Flask(__name__)
 
-COMMON_PASSWORDS_FILE_ID = "18PTFB31yc7rsx2N_okhq9Ri3h-EVfjlz"
-
+COMMON_PASSWORDS_URL =  "https://uc2st10.s3.eu-north-1.amazonaws.com/Common_passwords.txt"
 def download_common_passwords():
     try:
-        session = requests.Session()
-        GOOGLE_DRIVE_URL = "https://drive.google.com/uc?export=download"
-
-        response = session.get(GOOGLE_DRIVE_URL, params={"id": COMMON_PASSWORDS_FILE_ID}, stream=True)
-
-        # Extract Google’s security confirmation token
-        token = None
-        for key, value in response.cookies.items():
-            if key.startswith("download_warning"):
-                token = value
-
-        # Retry with confirmation token if needed
-        if token:
-            params = {"id": COMMON_PASSWORDS_FILE_ID, "confirm": token}
-            response = session.get(GOOGLE_DRIVE_URL, params=params, stream=True)
-
+        response = requests.get(COMMON_PASSWORDS_URL, stream=True)
         response.raise_for_status()
 
-        # Read file line by line to handle large files
         common_passwords = []
         for line in response.iter_lines(decode_unicode=True):
-            common_passwords.append(line.strip().lower())  # Convert to lowercase for case-insensitive comparison
+            common_passwords.append(line.strip().lower())  # Ensure lowercase for case-insensitive matching
 
         print("✅ Loaded Common Passwords (First 10):", common_passwords[:10])  # Debugging print
-
         return common_passwords
 
     except requests.exceptions.RequestException as e:
