@@ -6,8 +6,8 @@ from collections import Counter
 
 app = Flask(__name__)
 
-COMMON_PASSWORDS_URL = "https://drive.google.com/uc?id=1VtroOJM3nbHaGJLXuQjc6GVq1LfhDqiy&export=download
-"
+COMMON_PASSWORDS_URL = "https://drive.google.com/uc?id=1VtroOJM3nbHaGJLXuQjc6GVq1LfhDqiy&export=download"
+
 
 def download_common_passwords():
     try:
