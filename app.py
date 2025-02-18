@@ -11,24 +11,34 @@ COMMON_PASSWORDS_FILE_ID = "18PTFB31yc7rsx2N_okhq9Ri3h-EVfjlz"
 def download_common_passwords():
     try:
         session = requests.Session()
+        GOOGLE_DRIVE_URL = "https://drive.google.com/uc?export=download"
 
-        # Step 1: Request file with confirmation
-        GOOGLE_DRIVE_URL = f"https://drive.google.com/uc?export=download&id={COMMON_PASSWORDS_FILE_ID}"
-        response = session.get(GOOGLE_DRIVE_URL, stream=True)
-        
-        # Step 2: Extract the confirm token from Google Drive's response
+        # Step 1: Start download request
+        response = session.get(GOOGLE_DRIVE_URL, params={"id": COMMON_PASSWORDS_FILE_ID}, stream=True)
+
+        # Step 2: Extract Google’s security confirmation token
+        token = None
         for key, value in response.cookies.items():
             if key.startswith("download_warning"):
-                GOOGLE_DRIVE_URL = f"https://drive.google.com/uc?export=download&id={COMMON_PASSWORDS_FILE_ID}&confirm={value}"
+                token = value
 
-        # Step 3: Download the file
-        response = session.get(GOOGLE_DRIVE_URL)
+        # Step 3: If token exists, retry with confirmation
+        if token:
+            params = {"id": COMMON_PASSWORDS_FILE_ID, "confirm": token}
+            response = session.get(GOOGLE_DRIVE_URL, params=params, stream=True)
+
         response.raise_for_status()
-        
-        return response.text.splitlines()
-    
+
+        # Step 4: Download file in chunks to prevent memory errors
+        common_passwords = []
+        for line in response.iter_lines(decode_unicode=True):
+            common_passwords.append(line.strip())
+
+        print("✅ Common passwords file successfully downloaded!")
+        return common_passwords
+
     except requests.exceptions.RequestException as e:
-        print(f"Error downloading Common_passwords.txt: {e}")
+        print(f"❌ Error downloading Common_passwords.txt: {e}")
         return []
 
 Common_passwords = download_common_passwords()
