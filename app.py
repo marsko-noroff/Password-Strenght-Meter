@@ -18,6 +18,9 @@ def download_common_passwords():
         return []
 
 Common_passwords = download_common_passwords()
+# Debugging: Print first 10 passwords to check if they are loading correctly
+print("Loaded Common Passwords (First 10):", Common_passwords[:10])
+
 
 def password_meter(password, Common_passwords):
     password_lower = password.strip().lower()
