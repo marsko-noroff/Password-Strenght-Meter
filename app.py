@@ -6,32 +6,32 @@ from collections import Counter
 
 app = Flask(__name__)
 
-COMMON_PASSWORDS_URL =  "https://uc2st10.s3.eu-north-1.amazonaws.com/Common_passwords.txt"
-def download_common_passwords():
+# ✅ Use permanent AWS S3 URL (No expiration)
+COMMON_PASSWORDS_URL = "https://uc2st10.s3.eu-north-1.amazonaws.com/Common_passwords.txt"
+
+def is_common_password(password):
+    """ Check if a password exists in the common passwords file using streaming. """
     try:
         response = requests.get(COMMON_PASSWORDS_URL, stream=True)
         response.raise_for_status()
 
-        common_passwords = []
+        password_lower = password.strip().lower()  # Convert to lowercase for case-insensitive checking
+        
+        # Stream through file line by line (NO large memory usage)
         for line in response.iter_lines(decode_unicode=True):
-            common_passwords.append(line.strip().lower())  # Ensure lowercase for case-insensitive matching
-
-        print("✅ Loaded Common Passwords (First 10):", common_passwords[:10])  # Debugging print
-        return common_passwords
+            if line.strip().lower() == password_lower:
+                return True  # Password found
 
     except requests.exceptions.RequestException as e:
         print(f"❌ Error downloading Common_passwords.txt: {e}")
-        return []
 
-Common_passwords = download_common_passwords()
+    return False  # Password not found
 
-
-
-def password_meter(password, Common_passwords):
-    password_lower = password.strip().lower()
-    Common_passwords_lower = {p.strip().lower() for p in Common_passwords}
-
-    if password_lower in Common_passwords_lower:
+def password_meter(password):
+    """ Check password strength while avoiding large memory usage. """
+    
+    # ✅ Check if the password is in the common passwords file
+    if is_common_password(password):
         return {
             "score": 0,
             "strength": "Very Weak",
@@ -41,6 +41,7 @@ def password_meter(password, Common_passwords):
     score = 0
     feedback = []
 
+    # Length check
     if len(password) >= 12:
         score += 2
     elif len(password) >= 8:
@@ -48,6 +49,7 @@ def password_meter(password, Common_passwords):
     else:
         feedback.append("Password is too short. Use at least 12 characters")
 
+    # Complexity check
     has_upper = any(c.isupper() for c in password)
     has_lower = any(c.islower() for c in password)
     has_digit = any(c.isdigit() for c in password)
@@ -73,11 +75,13 @@ def password_meter(password, Common_passwords):
     else:
         feedback.append("Add a special character (@%$!^)")
 
+    # Repeated characters check
     char_counts = Counter(password)
     if any(count > len(password) / 2 for count in char_counts.values()):
         feedback.append("Avoid repeated characters too often.")
         score -= 1
 
+    # Common pattern check
     if re.search(r"(123|abc|qwerty|password)", password.lower()):
         feedback.append("Avoid common patterns like '123', 'abc', or 'qwerty'.")
         score -= 1
@@ -94,7 +98,7 @@ def home():
 def check_password():
     data = request.json
     password = data.get('password', '')
-    result = password_meter(password, Common_passwords)
+    result = password_meter(password)
     return jsonify(result)
 
 if __name__ == '__main__':
