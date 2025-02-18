@@ -6,16 +6,29 @@ from collections import Counter
 
 app = Flask(__name__)
 
-COMMON_PASSWORDS_URL = "https://github.com/marsko-noroff/Password-Strenght-Meter/releases/download/1.0/Common_passwords.txt"
-
+COMMON_PASSWORDS_FILE_ID = "18PTFB31yc7rsx2N_okhq9Ri3h-EVfjlz"
 
 def download_common_passwords():
     try:
-        response = requests.get(COMMON_PASSWORDS_URL)
+        session = requests.Session()
+
+        # Step 1: Request file with confirmation
+        GOOGLE_DRIVE_URL = f"https://drive.google.com/uc?export=download&id={COMMON_PASSWORDS_FILE_ID}"
+        response = session.get(GOOGLE_DRIVE_URL, stream=True)
+        
+        # Step 2: Extract the confirm token from Google Drive's response
+        for key, value in response.cookies.items():
+            if key.startswith("download_warning"):
+                GOOGLE_DRIVE_URL = f"https://drive.google.com/uc?export=download&id={COMMON_PASSWORDS_FILE_ID}&confirm={value}"
+
+        # Step 3: Download the file
+        response = session.get(GOOGLE_DRIVE_URL)
         response.raise_for_status()
+        
         return response.text.splitlines()
+    
     except requests.exceptions.RequestException as e:
-        print(f"Error Downloading common_passwords.txt: {e}")
+        print(f"Error downloading Common_passwords.txt: {e}")
         return []
 
 Common_passwords = download_common_passwords()
