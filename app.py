@@ -6,7 +6,7 @@ from collections import Counter
 
 app = Flask(__name__)
 
-COMMON_PASSWORDS_URL = "https://www.dropbox.com/scl/fi/mssepsyojl2xd8pva1fga/Common_passwords.txt?rlkey=but75iv17emzie71xmbp5tccv&dl=1"
+COMMON_PASSWORDS_URL = "https://www.dropbox.com/scl/fi/mssepsyojl2xd8pva1fga/Common_passwords.txt?rlkey=but75iv17emzie71xmbp5tccv&st=by6egpbc&dl=0"
 
 def download_common_passwords():
     try:
@@ -18,8 +18,6 @@ def download_common_passwords():
         return []
 
 Common_passwords = download_common_passwords()
-# Debugging: Print first 10 passwords to check if they are loading correctly
-print("Loaded Common Passwords (First 10):", Common_passwords[:10])
 
 
 def password_meter(password, Common_passwords):
