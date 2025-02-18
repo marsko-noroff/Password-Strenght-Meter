@@ -1,25 +1,22 @@
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import re
 import string
 from collections import Counter
 
-# Flask App
 app = Flask(__name__)
 
-# Corrected Dropbox Direct Download URL
 COMMON_PASSWORDS_URL = "https://www.dropbox.com/scl/fi/mssepsyojl2xd8pva1fga/Common_passwords.txt?rlkey=but75iv17emzie71xmbp5tccv&dl=1"
 
 def download_common_passwords():
     try:
         response = requests.get(COMMON_PASSWORDS_URL)
-        response.raise_for_status()  # Raise error for failed requests
+        response.raise_for_status()
         return response.text.splitlines()
-    except requests.exceptions.RequestException as e:  # Fixed typo
+    except requests.exceptions.RequestException as e:
         print(f"Error Downloading common_passwords.txt: {e}")
         return []
 
-# Load common passwords from Dropbox
 Common_passwords = download_common_passwords()
 
 def password_meter(password, Common_passwords):
@@ -83,7 +80,7 @@ def password_meter(password, Common_passwords):
 
 @app.route('/')
 def home():
-    return "Password Strength Meter API. Send a POST request to /check-password with JSON { 'password': 'yourpassword' }"
+    return render_template('index.html')
 
 @app.route('/check-password', methods=['POST'])
 def check_password():
