@@ -13,28 +13,28 @@ def download_common_passwords():
         session = requests.Session()
         GOOGLE_DRIVE_URL = "https://drive.google.com/uc?export=download"
 
-        # Step 1: Start download request
         response = session.get(GOOGLE_DRIVE_URL, params={"id": COMMON_PASSWORDS_FILE_ID}, stream=True)
 
-        # Step 2: Extract Google’s security confirmation token
+        # Extract Google’s security confirmation token
         token = None
         for key, value in response.cookies.items():
             if key.startswith("download_warning"):
                 token = value
 
-        # Step 3: If token exists, retry with confirmation
+        # Retry with confirmation token if needed
         if token:
             params = {"id": COMMON_PASSWORDS_FILE_ID, "confirm": token}
             response = session.get(GOOGLE_DRIVE_URL, params=params, stream=True)
 
         response.raise_for_status()
 
-        # Step 4: Download file in chunks to prevent memory errors
+        # Read file line by line to handle large files
         common_passwords = []
         for line in response.iter_lines(decode_unicode=True):
-            common_passwords.append(line.strip())
+            common_passwords.append(line.strip().lower())  # Convert to lowercase for case-insensitive comparison
 
-        print("✅ Common passwords file successfully downloaded!")
+        print("✅ Loaded Common Passwords (First 10):", common_passwords[:10])  # Debugging print
+
         return common_passwords
 
     except requests.exceptions.RequestException as e:
@@ -42,6 +42,7 @@ def download_common_passwords():
         return []
 
 Common_passwords = download_common_passwords()
+
 
 
 def password_meter(password, Common_passwords):
